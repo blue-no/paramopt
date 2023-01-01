@@ -1,8 +1,10 @@
 import warnings
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
+from sklearn.gaussian_process.kernels import RBF
+from sklearn.gaussian_process.kernels import ConstantKernel as C
 from sklearn.gaussian_process.kernels import ConvergenceWarning
 
 from paramopt import (UCB, AutoHyperparameterRegressor, BayesianOptimizer,
@@ -34,7 +36,6 @@ def test_optimization():
         eval_name='eval',
         acq_func=UCB(c=2.0),
         obj_func=obj_func,
-        working_dir=folder,
     )
 
     with warnings.catch_warnings():
@@ -42,23 +43,24 @@ def test_optimization():
         for i in range(N_TRIAL):
             next_params = optimizer.suggest()
             y = obj_func(next_params)
-            optimizer.update(next_params, y, label=f'normal_{i}')
-            optimizer.plot_distribution()
-            optimizer.plot_transition()
-            optimizer.save_history(folder.joinpath('history-normal.csv'))
+            optimizer.update(next_params, y, label=f'{i}')
+            optimizer.plot_distribution(save_as=folder.joinpath(f'normal_dist-{i}.png'))
+            optimizer.plot_transition(save_as=folder.joinpath(f'normal_trans-{i}.png'))
+            optimizer.save_history(folder.joinpath('normal_history.csv'))
+            plt.close('all')
 
 
 def test_autohp_optimization():
     regressor = AutoHyperparameterRegressor(
         hyperparams={
-            'ls': list(range(10, 110, 10)),
-            'nro': list(range(0, 11, 1))
+            'length_scale': list(range(10, 110, 10)),
+            'n_restarts_optimizer': list(range(0, 11, 1))
         },
         regressor_factory=lambda autohp:
             GaussianProcessRegressor(
-                kernel=C()*RBF(autohp.select('ls'), 'fixed'),
+                kernel=C()*RBF(autohp.select('length_scale'), 'fixed'),
                 normalize_y=True,
-                n_restarts_optimizer=autohp.select('nro')
+                n_restarts_optimizer=autohp.select('n_restarts_optimizer')
             )
     )
 
@@ -71,14 +73,14 @@ def test_autohp_optimization():
         eval_name='eval',
         acq_func=UCB(c=2.0),
         obj_func=obj_func,
-        working_dir=folder,
     )
 
     for i in range(N_TRIAL):
         next_params = optimizer.suggest()
         y = obj_func(next_params)
-        optimizer.update(next_params, y, label=f'autohp_{i}')
-        optimizer.plot_distribution()
-        optimizer.plot_transition()
-        optimizer.save_history(folder.joinpath('history-autohp.csv'))
+        optimizer.update(next_params, y, label=f'{i}')
+        optimizer.plot_distribution(save_as=folder.joinpath(f'autohp_dist-{i}.png'))
+        optimizer.plot_transition(save_as=folder.joinpath(f'autohp_trans-{i}.png'))
+        optimizer.save_history(folder.joinpath('autohp_history.csv'))
         regressor.dump_hp_history(folder.joinpath('hp.csv'))
+        plt.close('all')
