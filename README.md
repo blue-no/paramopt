@@ -45,5 +45,9 @@ for i in range(10):
     optimizer.save_history(folder.joinpath('history.csv'))
 ```
 
+Result:
+
+<img src="https://user-images.githubusercontent.com/88641432/210160117-516719d3-4011-43b3-ab26-4e1dc4af977c.gif" width="380px"><img src="https://user-images.githubusercontent.com/88641432/210160119-ed57d822-5943-4dac-a901-6e67ad8442b7.gif" width="380px">
+
 **Author:** Kota AONO  
 **License:** MIT License
