@@ -27,7 +27,7 @@ def plot_transition(
         ax_left.set_ylim(y_bounds)
     ax_left.set_xlabel("Iteration")
     ax_left.set_ylabel("Objective Score")
-    ax_right.set_ylabel("Parameter Value (normalized)", labelpad=10)
+    ax_right.set_ylabel("Parameter Value (Normalized)", labelpad=10)
     ax_left.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
     ax_left.ticklabel_format(style="sci", axis="y", scilimits=(-2, 2))
 
