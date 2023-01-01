@@ -8,19 +8,21 @@ pip install git+https://github.com/blue-no/paramopt.git
 
 ## Demo - 2D Exploration
 ```Python
+from pathlib import Path
 from paramopt import UCB, BayesianOptimizer, ExplorationSpace
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 
 
-folder = Path('demo_2D')
+folder = Path('demo_2d')
 folder.mkdir(exist_ok=True)
 
 def obj_func(X):
     return -(X[0]-5)**2-(X[1]-50)**2/50
 
 optimizer = BayesianOptimizer(
-    regressor=GaussianProcessRegressor(kernel=C()*RBF(), normalize_y=True),
+    regressor=GaussianProcessRegressor(
+        kernel=C()*RBF(length_scale_bounds='fixed'), normalize_y=True),
     exp_space=ExplorationSpace({
         'distance':
             {'values': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -30,7 +32,7 @@ optimizer = BayesianOptimizer(
              'unit': '°C'}
     }),
     eval_name='quality',
-    acq_func=UCB(c=1.0),
+    acq_func=UCB(c=2.0),
     obj_func=obj_func,
     normalize_X=True)
 
