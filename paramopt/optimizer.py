@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable, List, Literal, Optional, Tuple, Union
+from typing import Any, Callable, Literal, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +9,6 @@ from sklearn.preprocessing import MinMaxScaler
 from .acquisitions import BaseAcquisition
 from .graphs.distribution import plot_distribution_1d, plot_distribution_2d
 from .graphs.transition import plot_transition
-from .imples import BaseImple
 from .parameter import ExplorationSpace
 
 LABEL_NAME = 'label'
@@ -19,9 +18,9 @@ class BayesianOptimizer:
 
     def __init__(
         self,
-        regressor: 'BaseImple',
+        regressor: Any,
         exp_space: 'ExplorationSpace',
-        eval_name: Union[str, List[str]],
+        eval_name: Union[str, Tuple[str, str]],
         acq_func: 'BaseAcquisition',
         obj_func: Optional[Callable] = None,
         sug_func: Union[Literal['max', 'min'], Callable[['np.ndarray'], int]] = 'max',
@@ -29,10 +28,11 @@ class BayesianOptimizer:
         use: Optional[Literal['sklearn', 'gpy']] = 'sklearn'
     ) -> None:
 
-        if isinstance(eval_name, list):
-            self.eval_name = eval_name
+        if isinstance(eval_name, (tuple, list)):
+            self.eval_name = str(eval_name[0])
+            self.eval_name_with_unit = f'{str(eval_name[0])} [{str(eval_name[1])}]'
         else:
-            self.eval_name = [eval_name]
+            self.eval_name = self.eval_name_with_unit = str(eval_name)
 
         if use.lower() == 'sklearn':
             from .imples.sklearn import SklearnImple
@@ -57,7 +57,7 @@ class BayesianOptimizer:
         self.obj_func = obj_func
 
         self.__X = np.empty((0, len(self.exp_space.axis_names)))
-        self.__y = np.empty((0, len(self.eval_name)))
+        self.__y = np.empty((0, 1))
         self.__labels = []
         self.__X_next = None
 
@@ -77,14 +77,14 @@ class BayesianOptimizer:
                 df = pd.read_csv(path_)
 
         self.__X = np.atleast_2d(df[self.exp_space.axis_names].values)
-        self.__y = np.atleast_2d(df[self.eval_name].values)
+        self.__y = np.atleast_2d(df[self.eval_name].values).T
         self.__labels = df[LABEL_NAME].fillna('').astype(str).to_list()
 
         self._fit(X=self.__X, y=self.__y)
 
     def save_history(self, fp: Union[Path, str]) -> None:
         df_X = pd.DataFrame(self.__X, columns=self.exp_space.axis_names)
-        df_y = pd.DataFrame(self.__y, columns=self.eval_name)
+        df_y = pd.DataFrame(self.__y, columns=[self.eval_name])
         df_label = pd.DataFrame(self.__labels, columns=[LABEL_NAME])
         df = pd.concat([df_X, df_y, df_label], axis=1)
 
@@ -144,7 +144,7 @@ class BayesianOptimizer:
                 X_next=self.__X_next,
                 obj_func=self.obj_func,
                 x_label=space.axis_names_with_unit[0],
-                y_label=self.eval_name,
+                y_label=self.eval_name_with_unit,
                 acq_label=self.acq_func.name
             )
         elif space.ndim == 2:
@@ -159,7 +159,7 @@ class BayesianOptimizer:
                 obj_func=self.obj_func,
                 x_label=space.axis_names_with_unit[0],
                 y_label=space.axis_names_with_unit[1],
-                z_label=self.eval_name[0],
+                z_label=self.eval_name_with_unit,
                 acq_label=self.acq_func.name
             )
         else:
@@ -186,7 +186,7 @@ class BayesianOptimizer:
             y=self.__y,
             axis_values=space.axis_values(),
             x_names=space.axis_names,
-            y_names=self.eval_name
+            y_names=[self.eval_name]
         )
 
         if save_as is not None:

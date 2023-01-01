@@ -19,27 +19,17 @@ folder.mkdir(exist_ok=True)
 
 def test_exp_space():
     with pytest.raises(ValueError):
-        ExplorationSpace({'x0': []})
+        ExplorationSpace([('x0', [])])
+
+    with pytest.raises(TypeError):
+        ExplorationSpace([('x0', 0)])
 
     with pytest.raises(ValueError):
-        ExplorationSpace({'x0': 0})
+        ExplorationSpace([('x0', {})])
 
-    with pytest.raises(ValueError):
-        ExplorationSpace({'x0': {}})
-
-    with pytest.raises(ValueError):
-        ExplorationSpace({'x0': {'values': []}})
-
-    with pytest.raises(ValueError):
-        ExplorationSpace({'x0': {'values': 0}})
-
-    with pytest.raises(ValueError):
-        ExplorationSpace({'x0': {'values': {}}})
-
-    space = ExplorationSpace(
-        {'x1': X1_VALS,
-         'x2': {'values': X2_VALS,
-                'unit': 'K'}})
+    space = ExplorationSpace([
+        ('x1', X1_VALS),
+        ('x2', 'K', X2_VALS)])
 
     assert space.ndim == 2
     assert space.axis_names[0] == 'x1'
@@ -57,4 +47,4 @@ def test_exp_space():
     space.dump(folder.joinpath('space.json'))
     space2 = ExplorationSpace.load(folder.joinpath('space.json'))
 
-    assert space._ExplorationSpace__params == space2._ExplorationSpace__params
+    assert space._params == space2._params

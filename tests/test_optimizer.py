@@ -16,9 +16,9 @@ N_TRIAL = 10
 INIT_PARAMS = [1, 10]
 X1_VALS = list(range(0, 11, 1))
 X2_VALS = list(range(0, 101, 10))
-EXP_SPACE = {'x1': {'values': X1_VALS, 'unit': 'u1'},
-             'x2': {'values': X2_VALS, 'unit': 'u2'}}
-EVAL_NAME = 'evaluation'
+EXP_SPACE = [('x1', 'unit1', X1_VALS),
+             ('x2', 'unit2', X2_VALS)]
+EVAL_NAME = ('eval', 'unit3')
 C_VAL = 2.0
 
 folder = Path('tests', 'result', 'optimizer')
@@ -33,12 +33,12 @@ def test_io():
     optimizer = BayesianOptimizer(
         regressor=GaussianProcessRegressor(),
         exp_space=ExplorationSpace(EXP_SPACE),
-        eval_name='eval',
+        eval_name=EVAL_NAME,
         acq_func=None,
     )
     df = pd.DataFrame(
         [[0, 1, 2, '3'], [0, 10, 20, '30']],
-        columns=list(EXP_SPACE.keys())+['eval', 'label'])
+        columns=['x1', 'x2', 'eval', 'label'])
     optimizer.load_history(df)
 
     assert np.array_equal(
@@ -53,7 +53,7 @@ def test_io():
     optimizer2 = BayesianOptimizer(
         regressor=GaussianProcessRegressor(),
         exp_space=ExplorationSpace(EXP_SPACE),
-        eval_name='eval',
+        eval_name=EVAL_NAME,
         acq_func=None,
     )
     optimizer2.load_history(folder.joinpath('io_history.csv'))

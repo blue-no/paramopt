@@ -7,19 +7,21 @@ import numpy as np
 
 class ExplorationSpace:
 
-    def __init__(self, params: Union[List[Any], Dict[str, dict]]) -> None:
-        self.__params = {}
+    def __init__(
+        self,
+        params: Union[Tuple[str, str, list], Tuple[str, list]]
+    ) -> None:
+        self._params = []
         self.__load_params(params=params)
 
     @property
     def ndim(self) -> int:
-        return len(self.__params)
+        return len(self._params)
 
     @property
     def axis_names_with_unit(self) -> List[str]:
         labels = []
-        for name, values in self.__params.items():
-            unit = values['unit']
+        for (name, unit, _) in self._params:
             if unit is not None:
                 label = f'{name} [{str(unit)}]'
             else:
@@ -29,20 +31,20 @@ class ExplorationSpace:
 
     @property
     def axis_names(self) -> List[str]:
-        return list(self.__params.keys())
+        names = []
+        for (name, _, _) in self._params:
+            names.append(name)
+        return names
 
     def axis_values(self) -> List[float]:
         axis_values = []
-        for values in self.__params.values():
-            if isinstance(values, (list, tuple)):
-                axis_values.append(values)
-                continue
-            axis_values.append(values['values'])
-        return tuple(axis_values)
+        for (_, _, values) in self._params:
+            axis_values.append(values)
+        return axis_values
 
     def grid_axis_values(self, n_splits: int = 100) -> List[float]:
         grid_axis_values = []
-        for values in self.axis_values():
+        for (_, _, values) in self._params:
             if len(values) == 1:
                 grid_values = values.copy()
             else:
@@ -69,26 +71,22 @@ class ExplorationSpace:
     def dump(self, fp: Union[Path, str]) -> None:
         fp_ = Path(fp)
         with fp_.open('w') as f:
-            json.dump(self.__params, f, indent=2)
+            json.dump(self._params, f, indent=2)
 
-    def __load_params(self, params: Union[List[Any], Dict[str, dict]]) -> None:
-        for name, values in params.items():
-            if isinstance(values, (list, tuple)):
-                if len(values) == 0:
-                    raise ValueError('Value cannot be empty')
-                params[name] = {'values': values, 'unit': None}
-                continue
+    def __load_params(self, params) -> None:
+        for param in params:
+            if len(param) == 2:
+                name = str(param[0])
+                unit = None
+                values = list(param[1])
+            elif len(param) == 3:
+                name = str(param[0])
+                unit = str(param[1]) if param[1] is not None else None
+                values = list(param[2])
+            else:
+                raise ValueError('invalid format')
 
-            if not isinstance(values, dict):
-                raise ValueError(f'Value of {name} must be list, tuple or dict')
+            if len(values) == 0:
+                raise ValueError('Value cannot be empty')
 
-            keys = values.keys()
-            if 'values' not in keys:
-                raise ValueError(f'{name} must have key "values"')
-            if 'unit' not in keys:
-                values['unit'] = None
-            if not isinstance(values['values'], (list, tuple)):
-                raise ValueError(f'"values" of {name} must be list or tuple')
-            if len(values['values']) == 0:
-                raise ValueError('"values" cannot be empty')
-        self.__params = params
+            self._params.append((name, unit, values))

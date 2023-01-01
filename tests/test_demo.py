@@ -21,14 +21,9 @@ def test_demo():
     optimizer = BayesianOptimizer(
         regressor=GaussianProcessRegressor(
             kernel=C()*RBF(length_scale_bounds='fixed'), normalize_y=True),
-        exp_space=ExplorationSpace({
-            'distance':
-                {'values': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                'unit': 'mm'},
-            'temperature':
-                {'values': [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-                'unit': '°C'}
-        }),
+        exp_space=ExplorationSpace([
+            ('distance', 'mm', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+            ('temperature', '°C', [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])]),
         eval_name='quality',
         acq_func=UCB(c=2.0),
         obj_func=obj_func,
