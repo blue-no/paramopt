@@ -13,8 +13,6 @@ from .acquisitions import BaseAcquisition
 from .imples import BaseImple
 
 LABEL_NAME = 'label'
-DIST_PREFIX = 'dist-'
-TRANS_PREFIX = 'trans-'
 
 
 class BayesianOptimizer:
@@ -27,7 +25,6 @@ class BayesianOptimizer:
         acq_func: 'BaseAcquisition',
         obj_func: Optional[Callable] = None,
         suggest_func: Union[Literal['max', 'min'], Callable] = 'max',
-        working_dir: Union[Path, str] = None,
         normalize_X: bool = True,
         use: Optional[Literal['sklearn', 'gpy']] = 'sklearn'
     ) -> None:
@@ -37,18 +34,12 @@ class BayesianOptimizer:
         else:
             self.eval_name = [eval_name]
 
-        if working_dir is not None:
-            self.working_dir = Path(working_dir)
-            self.working_dir.mkdir(exist_ok=True)
-        else:
-            self.working_dir = Path.cwd()
-
         if use.lower() == 'sklearn':
             from .imples.sklearn import SklearnImple
-            self.imple = SklearnImple(regressor=regressor)
+            self._imple = SklearnImple(regressor=regressor)
         elif use.lower() == 'gpy':
             from .imples.gpy import GpyImple
-            self.imple = GpyImple(regressor=regressor)
+            self._imple = GpyImple(regressor=regressor)
         else:
             raise NotImplementedError(f'{use} not supported')
 
@@ -92,14 +83,14 @@ class BayesianOptimizer:
 
         self._fit(X=self.__X, y=self.__y)
 
-    def save_history(self, path: Union[Path, str]) -> None:
+    def save_history(self, fp: Union[Path, str]) -> None:
         df_X = pd.DataFrame(self.__X, columns=self.exp_space.axis_names)
         df_y = pd.DataFrame(self.__y, columns=self.eval_name)
         df_label = pd.DataFrame(self.__labels, columns=[LABEL_NAME])
         df = pd.concat([df_X, df_y, df_label], axis=1)
 
-        path_ = Path(path)
-        df.to_csv(path_, header=True, index=False, mode='w')
+        fp_ = Path(fp)
+        df.to_csv(fp_, header=True, index=False, mode='w')
 
     def update(self, X: Any, y: Any, label: Optional[Any] = None) -> None:
         X_ = np.atleast_2d(X)
@@ -128,7 +119,11 @@ class BayesianOptimizer:
             self.__X_next = X_next
         return self.__X_next
 
-    def plot_distribution(self, fig: Optional['plt.Figure'] = None) -> 'plt.Figure':
+    def plot_distribution(
+        self,
+        fig: Optional['plt.Figure'] = None,
+        save_as: Optional[Union[Path, str]] = None
+    ) -> 'plt.Figure':
         if fig is None:
             fig = plt.figure()
 
@@ -170,10 +165,18 @@ class BayesianOptimizer:
             )
         else:
             raise NotImplementedError(f'{space.ndim}D-plot is not supported')
-        fig.savefig(self.working_dir/f'{DIST_PREFIX}{self.__labels[-1]}.png')
+
+        if save_as is not None:
+            fp = Path(save_as)
+            fp.parent.mkdir(exist_ok=True)
+            fig.savefig(fp.as_posix())
         return fig
 
-    def plot_transition(self, fig: Optional['plt.Figure'] = None) -> 'plt.Figure':
+    def plot_transition(
+        self,
+        fig: Optional['plt.Figure'] = None,
+        save_as: Optional[Union[Path, str]] = None
+    ) -> 'plt.Figure':
         if fig is None:
             fig = plt.figure()
 
@@ -186,15 +189,19 @@ class BayesianOptimizer:
             x_names=space.axis_names_with_unit,
             y_names=self.eval_name
         )
-        fig.savefig(self.working_dir/f'{TRANS_PREFIX}{self.__labels[-1]}.png')
+
+        if save_as is not None:
+            fp = Path(save_as)
+            fp.parent.mkdir(exist_ok=True)
+            fig.savefig(fp.as_posix())
         return fig
 
     def _fit(self, X, y):
         if self.normalize_X:
             X = self.__scaler.transform(np.atleast_2d(X))
-        self.imple.fit(X=X, y=y)
+        self._imple.fit(X=X, y=y)
 
     def _predict(self, X):
         if self.normalize_X:
             X = self.__scaler.transform(np.atleast_2d(X))
-        return self.imple.predict(X=X)
+        return self._imple.predict(X=X)
