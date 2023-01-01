@@ -1,2 +1,3 @@
 from .animation import create_gif, select_images
-from .autohp import AutoHyperparameter, AutoHyperparameterRegressor
+from .regressor import AutoHyperparameter, AutoHyperparameterRegressor
+from .sugfunc import UnduplicatedSuggestor
