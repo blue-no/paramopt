@@ -9,7 +9,7 @@ from .base import BaseImple
 class GpyImple(BaseImple):
 
     def __init__(self, regressor: 'GPRegression') -> None:
-        super().__init__(regressor=regressor)
+        self.regressor = regressor
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         self.regressor.set_XY(X=X, Y=y)

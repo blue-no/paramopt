@@ -9,7 +9,7 @@ from .base import BaseImple
 class SklearnImple(BaseImple):
 
     def __init__(self, regressor: 'GaussianProcessRegressor') -> None:
-        super().__init__(regressor=regressor)
+        self.regressor = regressor
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> None:
         self.regressor.fit(X, y)
