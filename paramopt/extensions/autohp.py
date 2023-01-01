@@ -12,7 +12,7 @@ class AutoHyperparameter:
     def __init__(self, params):
         self.__names = list(params.keys())
         self.__combos = list(itertools.product(*params.values()))
-        self.__cur_combo = None
+        self.__cur_combo = self.__combos[0]
 
     @property
     def names(self):
@@ -36,7 +36,7 @@ class AutoHyperparameterRegressor:
         self.autohp = AutoHyperparameter(params=hyperparams)
         self.regressor_factory = regressor_factory
         self.history = []
-        self.regressor = None
+        self.regressor = regressor_factory(self.autohp)
 
     def fit(self, X, y):
         with warnings.catch_warnings():
