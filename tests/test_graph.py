@@ -47,6 +47,7 @@ def test_dist_1d():
         *_create_dist(ndim=1)
     )
     fig.savefig(folder.joinpath('dist_1d.png').as_posix())
+    plt.close('all')
 
 
 def test_dist_2d():
@@ -55,6 +56,7 @@ def test_dist_2d():
         *_create_dist(ndim=2)
     )
     fig.savefig(folder.joinpath('dist_2d.png').as_posix())
+    plt.close('all')
 
 
 def test_trans_3d():
@@ -63,3 +65,4 @@ def test_trans_3d():
         *_create_trans(ndim=3)
     )
     fig.savefig(folder.joinpath('trans_3d.png').as_posix())
+    plt.close('all')
