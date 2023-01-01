@@ -6,11 +6,11 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 
+from .acquisitions import BaseAcquisition
 from .graphs.distribution import plot_distribution_1d, plot_distribution_2d
 from .graphs.transition import plot_transition
-from .parameter import ExplorationSpace
-from .acquisitions import BaseAcquisition
 from .imples import BaseImple
+from .parameter import ExplorationSpace
 
 LABEL_NAME = 'label'
 
@@ -24,7 +24,7 @@ class BayesianOptimizer:
         eval_name: Union[str, List[str]],
         acq_func: 'BaseAcquisition',
         obj_func: Optional[Callable] = None,
-        suggest_func: Union[Literal['max', 'min'], Callable] = 'max',
+        sug_func: Union[Literal['max', 'min'], Callable[['np.ndarray'], int]] = 'max',
         normalize_X: bool = True,
         use: Optional[Literal['sklearn', 'gpy']] = 'sklearn'
     ) -> None:
@@ -43,14 +43,14 @@ class BayesianOptimizer:
         else:
             raise NotImplementedError(f'{use} not supported')
 
-        if suggest_func == 'max':
-            self.suggest_func = np.argmax
-        elif suggest_func == 'min':
-            self.suggest_func = np.argmin
-        elif isinstance(suggest_func, Callable):
-            self.suggest_func = suggest_func
+        if sug_func == 'max':
+            self.sug_func = np.argmax
+        elif sug_func == 'min':
+            self.sug_func = np.argmin
+        elif isinstance(sug_func, Callable):
+            self.sug_func = sug_func
         else:
-            raise ValueError('suggest_func must be "min", "max" or callable')
+            raise ValueError('sug_func must be "min", "max" or callable')
 
         self.exp_space = exp_space
         self.acq_func = acq_func
@@ -76,10 +76,9 @@ class BayesianOptimizer:
             else:
                 df = pd.read_csv(path_)
 
-        df = df.dropna()
         self.__X = np.atleast_2d(df[self.exp_space.axis_names].values)
         self.__y = np.atleast_2d(df[self.eval_name].values)
-        self.__labels = df[LABEL_NAME].fillna('').to_list()
+        self.__labels = df[LABEL_NAME].fillna('').astype(str).to_list()
 
         self._fit(X=self.__X, y=self.__y)
 
@@ -112,7 +111,7 @@ class BayesianOptimizer:
         mean, std = self._predict(X=X)
         mean, std = mean.reshape(-1, 1), std.reshape(-1, 1)
         acq = self.acq_func(mean=mean, std=std, X=self.__X, y=self.__y)
-        X_next = X[self.suggest_func(acq)]
+        X_next = X[self.sug_func(acq)]
         if len(X_next) == 1:
             self.__X_next = X_next[0]
         else:
@@ -186,7 +185,7 @@ class BayesianOptimizer:
             X=self.__X,
             y=self.__y,
             axis_values=space.axis_values(),
-            x_names=space.axis_names_with_unit,
+            x_names=space.axis_names,
             y_names=self.eval_name
         )
 
