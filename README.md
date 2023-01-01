@@ -1,4 +1,6 @@
 # ParamOpt
+<img src="https://img.shields.io/badge/version-v2.0.1-blue"> <img src="https://img.shields.io/badge/coverage-92%25-green">
+
 Python Library for Easy Bayesian Optimization.
 
 ## Install
