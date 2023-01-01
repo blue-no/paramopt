@@ -8,21 +8,21 @@ from matplotlib.ticker import ScalarFormatter
 
 
 def plot_distribution_1d(
-        fig: 'Figure',
-        X: 'np.ndarray',
-        y: 'np.ndarray',
-        axis_values: 'np.ndarray',
-        mean: Optional['np.ndarray'] = None,
-        std: Optional['np.ndarray'] = None,
-        acq: Optional['np.ndarray'] = None,
-        X_next: Optional[Any] = None,
-        obj_func: Optional[Callable] = None,
-        x_label: str = "x",
-        y_label: str = "y",
-        acq_label: str = "y",
-        *args: Any,
-        **kwargs: Any
-    ) -> 'Figure':
+    fig: 'Figure',
+    X: 'np.ndarray',
+    y: 'np.ndarray',
+    axis_values: 'np.ndarray',
+    mean: Optional['np.ndarray'] = None,
+    std: Optional['np.ndarray'] = None,
+    acq: Optional['np.ndarray'] = None,
+    X_next: Optional[Any] = None,
+    obj_func: Optional[Callable] = None,
+    x_label: str = "x",
+    y_label: str = "y",
+    acq_label: str = "y",
+    *args: Any,
+    **kwargs: Any
+) -> 'Figure':
 
     # Axes generation and initial settings
     if acq is not None:
@@ -91,22 +91,22 @@ def plot_distribution_1d(
 
 
 def plot_distribution_2d(
-        fig: 'Figure',
-        X: 'np.ndarray',
-        y: 'np.ndarray',
-        axis_values: List['np.ndarray'],
-        mean: Optional['np.ndarray'] = None,
-        std: Optional['np.ndarray'] = None,
-        acq: Optional['np.ndarray'] = None,
-        X_next: Optional[Tuple[Any]] = None,
-        obj_func: Optional[Callable] = None,
-        x_label: str = "x1",
-        y_label: str = "x2",
-        z_label: str = "y",
-        acq_label: Optional[str] = None,
-        *args: Any,
-        **kwargs: Any
-    ) -> 'Figure':
+    fig: 'Figure',
+    X: 'np.ndarray',
+    y: 'np.ndarray',
+    axis_values: List['np.ndarray'],
+    mean: Optional['np.ndarray'] = None,
+    std: Optional['np.ndarray'] = None,
+    acq: Optional['np.ndarray'] = None,
+    X_next: Optional[Tuple[Any]] = None,
+    obj_func: Optional[Callable] = None,
+    x_label: str = "x1",
+    y_label: str = "x2",
+    z_label: str = "y",
+    acq_label: Optional[str] = None,
+    *args: Any,
+    **kwargs: Any
+) -> 'Figure':
 
     # Axes generation and initial settings
     Xmeshes = np.meshgrid(axis_values[0], axis_values[1])
@@ -117,8 +117,7 @@ def plot_distribution_2d(
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_zlabel(z_label)
-    ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True, useOffset=True))
-    ax.ticklabel_format(style="sci", axis="z", scilimits=(-2, 2))
+    ax.ticklabel_format(style="sci", axis="z", scilimits=(-2, 2), useMathText=True)
 
     # Observation plot
     ax.scatter(X[:-1, 0], X[:-1, 1], y[:-1], color="black", label="Observation")
@@ -155,12 +154,13 @@ def plot_distribution_2d(
                 len(axis_values[0]), len(axis_values[1]))
             contf = ax.contourf(
                 Xmeshes[0], Xmeshes[1], acq.T, zdir="z",
-                offset=z_from, levels=100, alpha=0.6)
+                offset=z_from, levels=100, alpha=1.0)
             cb = fig.colorbar(
                 contf, pad=0.11, shrink=0.7,
                 label="Acquisition function"
                     + (f" ({acq_label})" if acq_label is not None else ""))
             cb.formatter.set_powerlimits((0, 0))
+            cb.formatter.set_useMathText(True)
             ax.set_zlim(z_from, z_to)
 
         # Next location plot
@@ -170,7 +170,7 @@ def plot_distribution_2d(
                 linewidth=0.8, zorder=100, label="Acquisition max")
 
         # Additional axes settings
-        leg = ax.legend(loc='upper right')
+        leg = ax.legend(loc='upper left')
         for line in leg.get_lines():
             line.set_linewidth(1.5)
             line.set_alpha(1.0)
