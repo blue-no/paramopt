@@ -16,7 +16,7 @@ class ExplorationSpace:
         return len(self.__params)
 
     @property
-    def axis_names_with_unit(self) -> Tuple[str]:
+    def axis_names_with_unit(self) -> List[str]:
         labels = []
         for name, values in self.__params.items():
             unit = values['unit']
@@ -25,11 +25,11 @@ class ExplorationSpace:
             else:
                 label = f'{name}'
             labels.append(label)
-        return tuple(labels)
+        return labels
 
     @property
-    def axis_names(self) -> Tuple[str]:
-        return tuple(self.__params.keys())
+    def axis_names(self) -> List[str]:
+        return list(self.__params.keys())
 
     def axis_values(self) -> List[float]:
         axis_values = []
