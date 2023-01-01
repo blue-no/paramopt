@@ -1,28 +1,31 @@
 import numpy as np
 import pytest
-from paramopt.acquisitions import UCB, EI, BaseAcquisition
+
+from paramopt.acquisitions import EI, UCB, BaseAcquisition
+
+N_OBS = 5
+N_AXVALS = 10
 
 
-def create_preds():
-    X = np.linspace(0, 10, 100)
-    mean = np.sin(X)
-    std = np.cos(X)
-    x = np.array([[np.pi*0.5], [np.pi*1.5]])
-    y = np.array([[1], [-1]])
-    return mean, std, x, y
+def _create_preds():
+    mean = np.random.random(size=(N_AXVALS, 1))
+    std = np.random.random(size=(N_AXVALS, 1))
+    x = np.random.random(size=(N_OBS, 1))
+    y = np.random.random(size=(N_OBS, 1))
+    return (mean, std, x, y)
 
 
 def test_base():
-    base = BaseAcquisition()
+    acq = BaseAcquisition()
     with pytest.raises(NotImplementedError):
-        base(*create_preds())
+        acq(*_create_preds())
 
 
 def test_ucb():
-    ucb = UCB(1.0)
-    ucb(*create_preds())
+    acq = UCB(1.0)
+    acq(*_create_preds())
 
 
 def test_ei():
-    ei = EI(1.0)
-    ei(*create_preds())
+    acq = EI(1.0)
+    acq(*_create_preds())

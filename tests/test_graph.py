@@ -1,117 +1,68 @@
-from itertools import product
 from pathlib import Path
 
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 import numpy as np
-import pytest
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF
 
-from paramopt.acquisitions.ucb import UCB
-from paramopt.graphs.distribution import _plot_process_1d, _plot_process_2d
-from paramopt.graphs.transition import _plot_transition
-from paramopt.graphs import BaseGraph
+from paramopt.graphs import (plot_distribution_1d, plot_distribution_2d,
+                             plot_transition)
+
+N_OBS = 5
+N_AXVALS = 10
 
 
-def f1(x):
-    return x * np.sin(x)
+folder = Path('tests', 'result', 'graph')
+folder.mkdir(exist_ok=True)
 
 
-def f2(x1, x2):
-    return (x1 * np.sin(x1*0.05+np.pi) + x2 * np.cos(x2*0.05)) * 0.1
+def _create_dist(ndim):
+    X = np.random.random(size=(N_OBS, ndim))
+    Y = np.random.random(size=(N_OBS, 1))
+    if ndim == 1:
+        axis_values = np.linspace(0, 1, N_AXVALS)
+    else:
+        axis_values = [np.linspace(0, 1, N_AXVALS) for _ in range(ndim)]
+    mean = np.random.random(size=(N_AXVALS**ndim, 1))
+    std = np.random.random(size=(N_AXVALS**ndim, 1))
+    acq = np.random.random(size=(N_AXVALS**ndim, 1))
+    X_next = np.random.rand(ndim)
+    obj_func = lambda *args: np.random.random(size=(N_AXVALS**ndim, 1))
+    return (X, Y, axis_values, mean, std, acq, X_next, obj_func)
 
 
-def make_train_dataset(X, y):
-    rng = np.random.RandomState(1)
-    training_indices = rng.choice(np.arange(y.size), size=6, replace=False)
-    X_train, y_train = X[training_indices], y[training_indices]
-    return X_train, y_train
-
-
-def predict_with_gp(X_train, y_train, X):
-    kernel = 1 * RBF(length_scale=10.0, length_scale_bounds='fixed')
-    gaussian_process = GaussianProcessRegressor(kernel=kernel, n_restarts_optimizer=9)
-    gaussian_process.fit(X_train, y_train)
-
-    mean_prediction, std_prediction = gaussian_process.predict(X, return_std=True)
-    ucb = UCB(c=1.0)
-    acquisition = ucb(mean_prediction, std_prediction, X_train, y_train)
-    next_X = X[np.argmax(acquisition)]
-
-    return mean_prediction, std_prediction, acquisition, next_X
-
-
-def test_base():
-    workdir = Path.cwd()/'tests'/'output'/'graph_base'
-
-    bg = BaseGraph()
-    with pytest.raises(NotImplementedError):
-        bg.plot()
-    with pytest.raises(ValueError):
-        bg.show()
-    with pytest.raises(ValueError):
-        bg.to_png(workdir)
+def _create_trans(ndim):
+    X = np.random.random(size=(N_OBS, ndim))
+    Y = np.random.random(size=(N_OBS, 1))
+    if ndim == 1:
+        axis_values = np.linspace(0, 1, N_AXVALS)
+    else:
+        axis_values = [np.linspace(0, 1, N_AXVALS) for _ in range(ndim)]
+    X_names = [f'x{i}' for i in range(ndim)]
+    Y_names = ['y']
+    return (X, Y, axis_values, X_names, Y_names)
 
 
 def test_dist_1d():
-    workdir = Path.cwd()/'tests'/'output'/'dist_1d'
-    workdir.mkdir(exist_ok=True)
-
-    X = np.linspace(start=0, stop=10, num=1_000).reshape(-1, 1)
-    y = np.squeeze(f1(X))
-    X_train, y_train = make_train_dataset(X, y)
-    mean_prediction, std_prediction, acquisition, next_X = predict_with_gp(X_train, y_train, X)
-
-    fig = _plot_process_1d(plt.figure(), X_train, y_train, X)
-    fig.tight_layout()
-    fig.savefig((workdir/"fig1").with_suffix(".png"))
-    fig = _plot_process_1d(plt.figure(), X_train, y_train, X, mean_prediction, std_prediction)
-    fig.tight_layout()
-    fig.savefig((workdir/"fig2").with_suffix(".png"))
-    fig = _plot_process_1d(plt.figure(), X_train, y_train, X, mean_prediction, std_prediction, acquisition, next_X, f1)
-    fig.tight_layout()
-    fig.savefig((workdir/"fig3").with_suffix(".png"))
+    fig = plot_distribution_1d(
+        plt.figure(),
+        *_create_dist(ndim=1)
+    )
+    fig.savefig(folder.joinpath('dist_1d.png').as_posix())
+    plt.close('all')
 
 
 def test_dist_2d():
-    workdir = Path.cwd()/'tests'/'output'/'dist_2d'
-    workdir.mkdir(exist_ok=True)
-
-    X1 = np.linspace(start=0, stop=10, num=100).reshape(-1, 1)
-    X2 = np.linspace(start=20, stop=50, num=100).reshape(-1, 1)
-    X = np.array(list(product(X1.flatten(), X2.flatten())))
-    y = np.squeeze(f2(X[:,0], X[:,1]))
-    X_train, y_train = make_train_dataset(X, y)
-    mean_prediction, std_prediction, acquisition, next_X = predict_with_gp(X_train, y_train, X)
-
-    fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2])
-    fig.tight_layout()
-    fig.savefig((workdir/"fig1").with_suffix(".png"))
-    fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2], mean_prediction)
-    fig.tight_layout()
-    fig.savefig((workdir/"fig2").with_suffix(".png"))
-    fig = _plot_process_2d(plt.figure(), X_train, y_train, [X1, X2], mean_prediction, acquisition, next_X, f2)
-    fig.tight_layout()
-    fig.savefig((workdir/"fig3").with_suffix(".png"))
+    fig = plot_distribution_2d(
+        plt.figure(),
+        *_create_dist(ndim=2)
+    )
+    fig.savefig(folder.joinpath('dist_2d.png').as_posix())
+    plt.close('all')
 
 
-def test_transition_nd():
-    workdir = Path.cwd()/'tests'/'output'/'transition_nd'
-    workdir.mkdir(exist_ok=True)
-
-    X1 = np.linspace(start=0, stop=10, num=100)
-    X2 = np.linspace(start=200, stop=500, num=100)
-    X3 = np.linspace(start=0, stop=-10, num=100)
-    X4 = np.linspace(start=-20, stop=20, num=100)
-    y = np.linspace(start=80, stop=100, num=100)
-    X_train = np.vstack((
-        np.random.choice(X1, 100),
-        np.random.choice(X2, 100),
-        np.random.choice(X3, 100),
-        np.random.choice(X4, 100),
-    )).T
-    y_train = np.atleast_2d(np.random.choice(y, 100)).T
-
-    fig = _plot_transition(plt.figure(), [X1,X2,X3,X4], X_train, y_train, ["pp1","pp2","pp3","pp4"], ["y"], Y_bounds=(0,100))
-    fig.tight_layout()
-    fig.savefig((workdir/"fig").with_suffix(".png"))
+def test_trans_3d():
+    fig = plot_transition(
+        plt.figure(),
+        *_create_trans(ndim=3)
+    )
+    fig.savefig(folder.joinpath('trans_3d.png').as_posix())
+    plt.close('all')

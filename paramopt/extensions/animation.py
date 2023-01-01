@@ -1,34 +1,34 @@
-import os.path as osp
 from typing import List
-from PIL import Image
 
 from natsort import natsorted
-
-from .string import unique_path
+from PIL import Image
 
 
 def create_gif(
-    file_paths: List[str], duration: float = 1.0, loop: int = 0
+    fp: str,
+    img_fps: List[str],
+    duration: float = 1.0,
+    loop: int = 0
 ) -> None:
     """Generate gif video from images.
 
     Parameters
     ----------
-    file_paths : list of strs
+    fp : str
+        Name of the output video
+    img_fps : list of strs
         List of image paths
     duration : float, optional
         Time interval between frames [s], by default 1.0.
     loop : int, optional
         Number of loop, by default 0 (infinite)
     """
-    if len(file_paths) == 0:
+    if len(img_fps) == 0:
         print('No file')
         return
-    folder = osp.dirname(file_paths[0])
-    save_path = unique_path(osp.join(folder, 'animation.gif'))
-    images = list(map(lambda file: Image.open(file), natsorted(file_paths)))
+    images = list(map(lambda file: Image.open(file), natsorted(img_fps)))
     images[0].save(
-        save_path, save_all=True, append_images=images[1:],
+        fp, save_all=True, append_images=images[1:],
         duration=float(duration)*1000, loop=int(loop))
     print('Done')
 
@@ -41,14 +41,14 @@ def select_images() -> List[str]:
     list of str
         List of image paths
     """
-    from tkinter import filedialog, Tk
+    from tkinter import Tk, filedialog
     try:
         from ctypes import windll
         windll.shcore.SetProcessDpiAwareness(True)
     except:
         pass
     Tk().withdraw()
-    file_paths = filedialog.askopenfilenames(
+    img_fps = filedialog.askopenfilenames(
         filetypes=[
             ('PNG files', '*.png'), ('JPEG files', '*.jpg')], initialdir='.')
-    return file_paths
+    return img_fps

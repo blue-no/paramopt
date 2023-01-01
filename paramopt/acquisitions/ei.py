@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 from scipy.special import erfc
 
@@ -10,18 +12,21 @@ class EI(BaseAcquisition):
     Parameters
     ----------
     xi: float
-        Offset.
+        This parameter determines the weight of the trade-off between
+        exploration and exploitation. The larger the value, the wider the
+        exploration area.
     """
     def __init__(self, xi: float = 0.0) -> None:
         self.xi = xi
 
     def __call__(
         self,
-        mean: np.ndarray,
-        std: np.ndarray,
-        X: np.ndarray,
-        y: np.ndarray
-    ) -> np.ndarray:
+        mean: 'np.ndarray',
+        std: 'np.ndarray',
+        y: 'np.ndarray',
+        *args: Any,
+        **kwargs: Any
+    ) -> 'np.ndarray':
         if y.shape[0] == 0:
             ymax = 0
         else:

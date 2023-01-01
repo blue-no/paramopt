@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paramopt"
+description = "Python Library for Easy Bayesian Optimization"
+readme = "README.md"
+authors = [{name = "Kota AONO", email = "k.pg.aono@gmail.com"}]
+license = {text = "MIT License"}
+requires-python = ">=3.6"
+dependencies = [
+    "matplotlib",
+    "natsort",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "scipy"
+]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "paramopt.__version__"}
