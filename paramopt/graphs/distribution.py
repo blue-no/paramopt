@@ -129,8 +129,8 @@ def plot_distribution_2d(
         if obj_func is not None:
             obj = obj_func(Xmeshes).reshape(len(axis_values[0]), len(axis_values[1]))
             ax.plot_wireframe(
-                Xmeshes[0], Xmeshes[1], obj,
-                color="black", alpha=0.5, linewidth=0.5, label="Objective function")
+                Xmeshes[0], Xmeshes[1], obj, color="black", alpha=0.5,
+                linewidth=0.5, label="Objective function")
 
         # Posterior mean plot
         if mean is not None:
@@ -145,8 +145,8 @@ def plot_distribution_2d(
                 [X[i, 0]]*2, [X[i, 1]]*2, [z_from, y[i]], color='black',
                 linewidth=0.8, linestyle='--', zorder=100)
         ax.plot(
-            [X[-1, 0]]*2, [X[-1, 1]]*2, [z_from, y[-1]], color='red', linestyle='--',
-            linewidth=0.8, zorder=100)
+            [X[-1, 0]]*2, [X[-1, 1]]*2, [z_from, y[-1]], color='red',
+            linestyle='--', linewidth=0.8, zorder=100)
 
         # Acquisition function plot
         if acq is not None:
@@ -156,18 +156,18 @@ def plot_distribution_2d(
                 Xmeshes[0], Xmeshes[1], acq.T, zdir="z",
                 offset=z_from, levels=100, alpha=1.0)
             cb = fig.colorbar(
-                contf, pad=0.11, shrink=0.7,
+                contf, pad=0.11, shrink=0.8,
                 label="Acquisition function"
-                    + (f" ({acq_label})" if acq_label is not None else ""))
-            cb.formatter.set_powerlimits((0, 0))
+                      + (f" ({acq_label})" if acq_label is not None else ""))
+            cb.formatter.set_powerlimits((-2, 2))
             cb.formatter.set_useMathText(True)
             ax.set_zlim(z_from, z_to)
 
         # Next location plot
         if X_next is not None:
             ax.plot(
-                [X_next[0]]*2, [X_next[1]]*2, [z_from, z_to], color='red', linestyle='-',
-                linewidth=0.8, zorder=100, label="Acquisition max")
+                [X_next[0]]*2, [X_next[1]]*2, [z_from, z_to], color='red',
+                linestyle='-', linewidth=0.8, zorder=100, label="Acquisition max")
 
         # Additional axes settings
         leg = ax.legend(loc='upper left')
