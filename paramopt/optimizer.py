@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Callable, Literal, Optional, Tuple, Union
+from typing import Any, Callable, List, Literal, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,7 +19,7 @@ class BayesianOptimizer:
     def __init__(
         self,
         regressor: Any,
-        exp_space: 'ExplorationSpace',
+        exp_space: Union['ExplorationSpace', List[Tuple]],
         eval_name: Union[str, Tuple[str, str]],
         acq_func: 'BaseAcquisition',
         obj_func: Optional[Callable] = None,
@@ -52,7 +52,11 @@ class BayesianOptimizer:
         else:
             raise ValueError('sug_func must be "min", "max" or callable')
 
-        self.exp_space = exp_space
+        if isinstance(exp_space, ExplorationSpace):
+            self.exp_space = exp_space
+        elif isinstance(exp_space, (tuple, list)):
+            self.exp_space = ExplorationSpace(exp_space)
+
         self.acq_func = acq_func
         self.obj_func = obj_func
 
@@ -63,18 +67,18 @@ class BayesianOptimizer:
 
         self.normalize_X = normalize_X
         if self.normalize_X:
-            self.__scaler = MinMaxScaler().fit(
-                np.atleast_2d(self.exp_space.axis_values()).T)
+            self.__scalers = [MinMaxScaler().fit(np.atleast_2d(values).T) \
+                              for values in self.exp_space.axis_values()]
 
     def load_history(self, io: Union['pd.DataFrame', Path, str]) -> None:
         if isinstance(io, pd.DataFrame):
             df = io
         else:
-            path_ = Path(io)
-            if path_.suffix == '.xlsx':
-                df = pd.read_excel(path_)
+            io_ = Path(io)
+            if io_.suffix == '.xlsx':
+                df = pd.read_excel(io_)
             else:
-                df = pd.read_csv(path_)
+                df = pd.read_csv(io_)
 
         self.__X = np.atleast_2d(df[self.exp_space.axis_names].values)
         self.__y = np.atleast_2d(df[self.eval_name].values).T
@@ -103,6 +107,7 @@ class BayesianOptimizer:
         self.__X = np.vstack((self.__X, X_))
         self.__y = np.vstack((self.__y, y_))
         self.__labels.append(label_)
+        self.__X_next = None
 
         self._fit(X=self.__X, y=self.__y)
 
@@ -195,12 +200,18 @@ class BayesianOptimizer:
             fig.savefig(fp.as_posix())
         return fig
 
-    def _fit(self, X, y):
+    def _fit(self, X: np.ndarray, y: np.ndarray) -> None:
         if self.normalize_X:
-            X = self.__scaler.transform(np.atleast_2d(X))
-        self._imple.fit(X=X, y=y)
+            self._imple.fit(X=self._normalize(X), y=y)
+        else:
+            self._imple.fit(X=X, y=y)
 
-    def _predict(self, X):
+    def _predict(self, X: np.ndarray) -> Any:
         if self.normalize_X:
-            X = self.__scaler.transform(np.atleast_2d(X))
+            return self._imple.predict(X=self._normalize(X))
         return self._imple.predict(X=X)
+
+    def _normalize(self, X: np.ndarray) -> np.ndarray:
+        X_ = np.hstack([scaler.transform(np.atleast_2d(x).T) for x, scaler \
+                       in zip(X.T, self.__scalers)])
+        return X_
