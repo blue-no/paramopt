@@ -27,7 +27,7 @@ optimizer = BayesianOptimizer(
         kernel=C()*RBF(length_scale_bounds='fixed'),
         normalize_y=True),
     exp_space=[('Distance', 'mm', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-                ('Temperature', '°C', [0, 20, 40, 50, 60, 80, 100])],
+               ('Temperature', '°C', [0, 20, 40, 50, 60, 80, 100])],
     eval_name='Quality',
     acq_func=UCB(c=2.0),
     obj_func=obj_func,
