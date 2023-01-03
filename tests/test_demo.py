@@ -20,22 +20,23 @@ def obj_func(X):
 def test_demo():
     optimizer = BayesianOptimizer(
         regressor=GaussianProcessRegressor(
-            kernel=C()*RBF(length_scale_bounds='fixed'), normalize_y=True),
-        exp_space=ExplorationSpace([
-            ('distance', 'mm', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-            ('temperature', '°C', [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100])]),
-        eval_name='quality',
+            kernel=C()*RBF(length_scale_bounds='fixed'),
+            normalize_y=True),
+        exp_space=[('Distance', 'mm', [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+                   ('Temperature', '°C', [0, 20, 40, 50, 60, 80, 100])],
+        eval_name='Quality',
         acq_func=UCB(c=2.0),
         obj_func=obj_func,
         normalize_X=True)
 
+    next_params = optimizer.suggest()
     with warnings.catch_warnings():
         warnings.simplefilter('ignore', ConvergenceWarning)
         for i in range(10):
-            next_params = optimizer.suggest()
             y = obj_func(next_params)
             optimizer.update(X=next_params, y=y, label=i)
+            optimizer.save_history(folder.joinpath('history.csv'))
+            next_params = optimizer.suggest()
             optimizer.plot_distribution(save_as=folder.joinpath(f'dist-{i}.png'))
             optimizer.plot_transition(save_as=folder.joinpath(f'trans-{i}.png'))
-            optimizer.save_history(folder.joinpath('history.csv'))
             plt.close('all')
