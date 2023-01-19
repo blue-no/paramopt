@@ -70,6 +70,18 @@ class BayesianOptimizer:
             self.__scalers = [MinMaxScaler().fit(np.atleast_2d(values).T) \
                               for values in self.exp_space.axis_values()]
 
+    @property
+    def labels(self) -> List[str]:
+        return self.__labels.copy()
+
+    @property
+    def X(self) -> np.ndarray:
+        return self.__X.copy()
+
+    @property
+    def y(self) -> np.ndarray:
+        return self.__y.copy()
+
     def load_history(self, io: Union['pd.DataFrame', Path, str]) -> None:
         if isinstance(io, pd.DataFrame):
             df = io
